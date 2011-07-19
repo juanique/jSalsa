@@ -1,0 +1,186 @@
+<html>
+    <head>
+
+        <!-- the following javascript files are required. Download them as necessary -->
+        <script type='text/javascript' src='js/Lib/jquery-1.6.min.js'></script>
+        <script type='text/javascript' src='js/Lib/jquery-fieldselection.pack.js'></script>
+        <!-- End required extra libs -->
+
+        <link href='css/Components/MagicTextArea.base.css' type='text/css' rel='stylesheet' />
+        <link href='css/Components/DropDownList.base.css' type='text/css' rel='stylesheet' />
+        <style type='text/css'>
+            textarea{
+                width: 600px;
+            }
+            .rainbow {
+                opacity: 0.4;
+            }
+
+            body{
+                color: #333;
+                font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+                padding: 20px;
+            }
+            textarea {
+                margin: 30px;
+            }
+
+
+            #page-header span{
+                font-size: 15pt;
+            }
+
+            #see{
+                font-weight: bold;
+                color: black;
+            }
+            
+            .clickable{
+                cursor: pointer;
+            }
+
+            #page-header span.selected{
+                color: red;
+                font-weight: bold;
+                cursor: normal;
+            }
+            hr {
+                color: #ccc;
+                background-color: #ccc;
+                height: 2px;
+                border: 0;
+            }
+            .big-O{
+                font-weight: bold;
+            }
+        </style>
+    </head>
+
+    <body>
+
+<div id='content-magic' class='content'>
+
+        <h1> MagicTextarea </h1>
+
+        The following library uses jQuery to allow diferent interactions on the context of editing the value of a textarea. I recommend running these examples with Firefox 3.0+ or Chrome. Be aware that this is just the result of a weekend of work, it's still very incomplete and buggy.
+
+        <h2> Sparql variable highlight </h2>
+        <p>This example detects Sparql variables (starting with a '?') from a query and highlights them in a consistent manner, it also adds mouse interaction with the highlighted variables to quickly identify all ocurrences of a certain variable within the query. Remember, the TextArea remains completely editable, try adding new variables to the query below (the query does not need to be syntactically correct, just add words that start with '?'), notice how every new variable gets a new color but reused variables maintain the one they had before.</p>
+
+        <textarea id='sparql_textearea'>SELECT ?subject, ?predicate, ?object WHERE { ?subject ?predicate ?object }</textarea>
+
+        <p>The Sparql variable highligter parser is included on the default package.</p>
+        
+        <h2> A simple custom parser </h2>
+        Say you want to replace all ocurrences of one word by another, or highlight them as they are typed on the textarea, you can do that very easily with a custom parser. Try writting <b>apple</b>, <b>lemon</b>, <b>banana</b> or <b>rainbow</b> on the TextArea blow. Notice how the use of regular expressions allow you to easily match these strings even with different casings and/or pluralized.
+
+        <textarea id='custom_textarea'>Apples are red, lemons are yellow and clickble, bananas" are not allowed, rainbows are multicolored.</textarea>
+
+        The parser needs to implement the parseNodeText() function, which will be called each time a portion of the textarea contents is modified. The argument holds the modified portion and it can be replaced by returning anything from a single text to a concatenation of text nodes and SPANs which can be given different css styles and behaviours.
+
+        The MagicTextArea object provides functions for easy string matching, the match() function receives the text to parse, a regular expression to match words to and a callback function which must specify at least a SPAN element to be placed on top of the matching word and optionaly a DIV element to be used for mouse interactions.
+
+        <h2> Facebook-like semantic inline tagging </h2>
+Have you ever tagged a person in a facebook post? when you type an '@' character a list is displayed to select and tag people inline directly on the textarea. The following example allows you to do exactly that.
+
+        <textarea id='tag_textarea'>
+Write an at-sign: 
+        </textarea>
+
+A function is provided to define this kind of behaviour. The refreshlist() function refreshes the list contents based on the text following the trigger character, the parseCaretWord() is responsible for generating the span (for the css styles) and tag (for mouse behaviours) based on the selected value from the list.
+
+        <script type='text/javascript' src='js/Base/oop.js'></script>
+        <script type='text/javascript' src='js/Base/base.js'></script>
+        <script type='text/javascript' src='js/Components/Notifier.js'></script>
+        <script type='text/javascript' src='js/Components/MagicTextarea.js'></script>
+        <script type='text/javascript' src='js/Components/DropDownList.js'></script>
+        <script type='text/javascript'>
+            var magic1, magic2, magic3;
+            $(document).ready(function(e){
+                SyntaxHighlighter.highlight();
+                magic1 = new MagicTextArea($('#sparql_textearea'));
+                magic1.addParser(new SparqlParser());
+
+                magic2 = new MagicTextArea($('#custom_textarea'));
+                magic2.setParsers([
+                    //First parser, replaces fuck by f**k.
+                    {
+                        parseNodeText : function(text){
+                            return text.replace(/banana(s)?/ig, function(m){ return m[0]+m[1]+"**"+m.substring(4); });
+                        }
+                    },
+                    //Second parser, highlights the word 'rainbow' in different colors, 'John' in blue and clickable.
+                    {
+                        parseNodeText : function(text){
+                            var out = magic2.match(text, /(lemon(s)?)|(apple(s)?)|(rainbow(s)?)/ig, function(w){
+                                var span = $('<span>'), color, tag;
+                                switch(w.charAt(0).toLowerCase()){
+                                    case 'l': //lemons
+                                        span.css('background','yellow').html(w);
+                                        tag  = $('<div>').click(function(e){alert('I\'m a lemon');})
+                                        break;
+                                    case 'a': //apples
+                                        span.css('background','red').html(w);
+                                        break;
+                                    case 'r': //rainbow(s)
+                                        span.addClass('rainbow');
+                                        for(var i = 0; i < w.length; i ++){
+                                            span.append($('<span>').css('background',getRandomColor()).html(w[i]));
+                                        }
+                                        break;
+                                }
+
+                                var out = {span : span, tag : tag };
+                                return out;
+                            });
+                            return out;
+                        }
+                    }
+                ]);
+
+                magic3 = new MagicTextArea($('#tag_textarea'));
+                magic3.addInlineSuggest({
+                    trigger: '@',
+                    refreshList : function(word, list){
+                        list.setOptions(['Homer','Bart','Lisa','Marge']);
+                    },
+                    parseCaretWord : function(word,value){
+                        return {
+                            span : $('<span>'+value+'</span>').css('border-bottom','1px dotted blue'),
+                            tag :  $('<div title="'+word+' was parsed and '+value+' was tagged">')
+                        };
+                    }
+                });
+
+            });
+
+        </script>
+    </div>
+
+    <script type='text/javascript'>
+        jQuery('.clickable').click(function(){
+            jQuery('.clickable').removeClass('selected');
+            jQuery(this).addClass('selected');
+        });
+        jQuery('#set-content-median').click(function(){
+            jQuery('.content').hide();
+            jQuery('#content-median').show();
+
+            magic1.adjustMagicDiv();
+            magic2.adjustMagicDiv();
+            magic3.adjustMagicDiv();
+        });
+        jQuery('#set-content-magic').click(function(){
+            jQuery('.content').hide();
+            jQuery('#content-magic').show();
+
+            magic1.adjustMagicDiv();
+            magic2.adjustMagicDiv();
+            magic3.adjustMagicDiv();
+        });
+
+    </script>
+
+    </body>
+
+</html>

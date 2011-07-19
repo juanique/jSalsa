@@ -1,0 +1,44 @@
+.h-hint,
+.v-hint{
+    position : relative;
+    z-index: 15;
+    border: 1px solid black;
+    border: 1px solid #c93;
+    padding: 10px 12px;
+    background: #ffc; /*url(pointer.gif) no-repeat -100px -100px;*/
+    max-width: 150px;
+}
+
+.h-hint{
+    right: -10px;
+}
+
+.hintText{
+   margin: 0; 
+   font-size: 10pt;
+}
+
+
+.h-hint .hintPointer{
+    position: absolute;
+    z-index: 16;
+    background: url(img/pointerleft.gif) left top no-repeat;
+    left: -9px;
+    top: 5px;
+    height: 19px;
+    width: 10px;
+}
+
+.v-hint .hintPointer{
+    position: absolute;
+    z-index: 16;
+    background: url(img/pointerup.gif) left top no-repeat;
+    left: 5px;
+    top: -10px;
+    width: 19px;
+    height: 10px;
+}
+
+input.empty{
+    color: #ccc;
+}
