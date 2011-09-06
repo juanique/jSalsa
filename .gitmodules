@@ -1,0 +1,3 @@
+[submodule "jSalsa-core"]
+	path = jSalsa-core
+	url = git@github.com:juanique99/jSalsa-core.git
